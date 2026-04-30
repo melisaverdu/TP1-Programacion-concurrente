@@ -1,3 +1,5 @@
+import java.util.LinkedList;
+
 /*
 Es una clase base para las colas que vamos a necesitar
 
@@ -12,4 +14,33 @@ Metodos(sujeto a  cambios) :
     public Job getRandomJob() retorna un job aleatorio de la cola
  */
 public class JobQueue {
+    
+    private final LinkedList<Job> queue; // Cola para almacenar los Jobs
+
+    public JobQueue() {
+        this.queue = new LinkedList<>();
+    }
+
+    public synchronized void pushJob(Job job) {
+        queue.addLast(job);
+    }
+
+    public Job popJob() {
+        if (queue.isEmpty()) {
+            return null;
+        }
+        return queue.removeFirst();
+    }
+
+    public Job getRandomJob() {
+        if (queue.isEmpty()) {
+            return null;
+        }
+        int randomIndex = (int) (Math.random() * queue.size());
+        return queue.get(randomIndex);
+    }
+
+    public boolean isEmpty() {
+        return queue.isEmpty();
+    }
 }
