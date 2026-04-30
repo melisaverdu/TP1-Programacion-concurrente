@@ -10,6 +10,9 @@ Metodos(sujeto a  cambios) :
     public Job popJob() -> saca y retorna el primer job de la cola
 
     public Job getRandomJob() retorna un job aleatorio de la cola
+
+    public isEmpty() -> retorna true si la cola esta vacia, false en caso contrario
+    
  */
 public class JobQueue {
 }

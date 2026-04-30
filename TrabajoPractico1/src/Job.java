@@ -8,6 +8,9 @@ Atributos que debe tener:
 Metodos(sujeto a  cambios) :
     public String getEstado -> No recibe parametros
                             -> Retorna el estado actual del Job
+    
+    public void setEstado -> Recibe un String con el nuevo estado del Job
+                            -> Establece el nuevo estado del Job
 
     public int getID -> no recibe parametros
                      -> retorna el ID del Job

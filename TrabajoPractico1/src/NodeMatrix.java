@@ -16,6 +16,8 @@ Metodos(sujeto a  cambios) :
     public void releaseNode() -> pone el nodo en "LIBRE"
 
     public void decommissionNode() -> pone el nodo en "FUERA DE SERVICIO"
+
+    
  */
 public class NodeMatrix {
 }

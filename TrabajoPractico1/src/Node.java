@@ -2,9 +2,9 @@
 Es una clase simple, representa a un Nodo
 
 Atributos que debe tener:
-    ID (int) -> para que sea unico y recnocible
+    ID (int) -> para que sea unico y reconocible
     Estado(String) -> "LIBRE" , "OCUPADO" , "FUERA DE SERVICIO"
-    contador de ejecuciones (int) ->
+    contador de ejecuciones (int) -> se incrementa cada vez que se asigna un Job al nodo, se utiliza para el algoritmo de asignacion de Jobs
 
 Metodos(sujeto a  cambios) :
     public String getEstado -> No recibe parametros
@@ -15,6 +15,8 @@ Metodos(sujeto a  cambios) :
 
     public void incrementarContador -> no recibe parametros
                                     -> incrementa en +1 el contador de ejecuciones
+
+    public setID -> establece el ID del job
  */
 
 public class Node {
