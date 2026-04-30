@@ -29,33 +29,37 @@ public class Job {
         VALIDADOS
     }
     
-    private int ID; // Atributo para almacenar el ID del Job
+    private final int ID; // Atributo para almacenar el ID del Job
     private Estado estado; // Atributo para almacenar el estado del Job
+    private int nodoAsignado; // Para saber en qué nodo se está procesando
     
     public Job(int id, Estado estado) {
         // Constructor para inicializar el Job con un ID y un estado
         this.ID = id;
         this.estado = Estado.SIN_ESTADO; // Inicializamos el estado como SIN_ESTADO por defecto
+        this.nodoAsignado = -1; // Para saber en qué nodo se está procesando
     }
 
     public Estado getEstado() {
-        // Método para obtener el estado actual del Job
+        // Metodo para obtener el estado actual del Job
         return this.estado;
     }
 
     public void setEstado(Estado nuevoEstado) {
-        // Método para establecer un nuevo estado para el Job
+        // Metodo para establecer un nuevo estado para el Job
         this.estado = nuevoEstado;
     }
 
     public int getID() {
-        // Método para obtener el ID del Job
+        // Metodo para obtener el ID del Job
         return this.ID;
     }
 
-    public void setID(int nuevoID) {
-        // Método para establecer un nuevo ID para el Job
-        this.ID = nuevoID;
+    public int getAssignedNodeId(){
+        return this.nodoAsignado;
     }
-    
+
+    public void setAssignedNodeId(int assignedNodeId) {
+        this.nodoAsignado = assignedNodeId;
+    }
 }

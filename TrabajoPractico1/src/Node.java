@@ -35,23 +35,27 @@ public class Node {
         this.contadorEjecuciones = 0; // Inicializamos el contador de ejecuciones en 0
     }
 
+    public void setEstado(Estado estado){
+        this.estado = estado;
+    }
+
     public Estado getEstado() {
-        // Método para obtener el estado actual del Nodo
+        // Metodo para obtener el estado actual del Nodo
         return this.estado;
     }
 
     public int getID() {
-        // Método para obtener el ID del Nodo
+        // Metodo para obtener el ID del Nodo
         return this.ID;
     }
 
     public void incrementarContador() {
-        // Método para incrementar el contador de ejecuciones en +1
+        // Metodo para incrementar el contador de ejecuciones en +1
         this.contadorEjecuciones++;
     }
 
     public int getContadorEjecuciones() {
-        // Método para obtener el contador de ejecuciones
+        // Metodo para obtener el contador de ejecuciones
         return this.contadorEjecuciones;
     }
 }
