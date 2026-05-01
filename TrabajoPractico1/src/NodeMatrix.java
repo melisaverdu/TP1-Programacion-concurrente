@@ -37,8 +37,9 @@ public class NodeMatrix {
         }
     
 
-        public Node ocuparNodoAleatorio(){
- /*
+        private Node ocuparNodoAleatorio(){
+
+/*
 sheduler necesita saber que nodo ocupar para asignar el job
              
 Tiene que devolver uun Node si logró ocupar uno
@@ -66,6 +67,57 @@ otro nodo disponiblñe"
         }
     }
 }
+
+    private boolean setFueradeServicio(int idNodo){
+        /*
+        En la etapa 2, si el job es inválido, el nodo asociado queda fuera de servicio.
+        */
+        LockPrinter.lock();
+        try {
+            if (idNodo >= 0 && idNodo < cantidadNodos) { // Verifico que el ID del nodo sea válido
+                Node nodo = nodos[idNodo];
+                nodo.setEstado(EstadoNode.FUERA_DE_SERVICIO); // Pongo el nodo en "FUERA DE SERVICIO"
+                return true; // Retorno true si se pudo sacar de servicio
+            }
+            return false; // Retorno false si el ID del nodo no es válido
+        } finally {
+            LockPrinter.unlock();
+        }
+    }
+
+    private boolean setLibre(int idNodo){
+        /*
+        En la etapa 2,una vez que el job es validado, el nodo asociado queda libre nuevamente.
+        */
+        LockPrinter.lock();
+        try {
+            if (idNodo >= 0 && idNodo < cantidadNodos) { // Verifico que el ID del nodo sea válido
+                Node nodo = nodos[idNodo];
+                nodo.setEstado(EstadoNode.LIBRE); // Pongo el nodo en "LIBRE"
+                return true; // Retorno true si se pudo liberar el nodo
+            }
+            return false; // Retorno false si el ID del nodo no es válido
+        } finally {
+            LockPrinter.unlock();
+        }
+    }
+
+    public boolean desocuparNodo(int idNodo){
+        /*
+        En la etapa 3, una vez que el job finaliza su ejecución, el nodo asociado queda libre nuevamente.
+        */
+        return setLibre(idNodo);
+    }
+
+    public boolean sacarDeServicio(int idNodo){
+        /*
+        En la etapa 2, si el job es inválido, el nodo asociado queda fuera de servicio.
+        */
+        return setFueradeServicio(idNodo);
+    }
+    
+    
+
 
 
 

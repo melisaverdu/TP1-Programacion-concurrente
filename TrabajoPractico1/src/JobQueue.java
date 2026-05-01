@@ -36,6 +36,7 @@ public class JobQueue {
         Cada job debe ser revisado por un solo hilo a la vez
         Cada job puede ser procesado una sola vez.
         Entonces yo creo que tendría que elegir uno aleatorio y sacarlo de la cola.
+     */
      public synchronized Job popRandomJob() {
         if (queue.isEmpty()) {
             return null;
@@ -43,17 +44,8 @@ public class JobQueue {
         int randomIndex = (int) (Math.random() * queue.size());
         return queue.remove(randomIndex);
     }
-    */
 
-    public Job getRandomJob() {
-        if (queue.isEmpty()) {
-            return null;
-        }
-        int randomIndex = (int) (Math.random() * queue.size());
-        return queue.get(randomIndex);
-    }
-
-    public boolean isEmpty() {
+    public synchronized boolean isEmpty() {
         return queue.isEmpty();
     }
 }
