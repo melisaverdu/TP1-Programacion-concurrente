@@ -10,11 +10,13 @@ Ejecutado por 3 hilos
                   -> Job se registra en *JobsEnCola*
 
 */
-public class Scheduler implements Runnable{
+public class Scheduler implements Runnable {
 
-    JobQueue enCola;
-    JobQueue creados;
-    NodeMatrix matriz;
+    private static final int DEMORA_MS = 100;
+
+    private final JobQueue enCola;
+    private final JobQueue creados;
+    private final NodeMatrix matriz;
 
     public Scheduler(JobQueue enCola, JobQueue creados, NodeMatrix matriz) {
         this.enCola = enCola;
@@ -23,23 +25,49 @@ public class Scheduler implements Runnable{
     }
 
     @Override
-    public void run(){
-        Job job = creados.popJob(); // saco un job de los creados
-        if (job != null) { // si hay un job para procesar
-            Node nodo = matriz.ocuparNodoAleatorio(); // intento ocupar un nodo aleatorio
+    public void run() {
+        Job job = creados.popJob();
 
-            while (nodo == null) { // si no pude ocupar un nodo, sigo intentando
-                nodo = matriz.ocuparNodoAleatorio();
-                if(nodo == null) {
-                    try {
-                        Thread.sleep(100); // espero un poco antes de intentar de nuevo para evitar un ciclo muy rápido
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt(); // restablecer el estado de interrupción
-                    }
-                }
+        while (job != null) {
+            Node nodo = buscarNodoDisponible();
+
+            if (nodo == null) {
+                return;
             }
-            job.setAssignedNodeId(nodo.getID()); // asigno el nodo al job
-            enCola.pushJob(job); // agrego el job a la cola de jobs en espera de validacion
+
+            job.setAssignedNodeId(nodo.getID());
+            job.setEstado(EstadoJob.EN_COLA);
+            enCola.pushJob(job);
+
+            if (!esperarDemora()) {
+                return;
+            }
+
+            job = creados.popJob();
+        }
+    }
+
+    private Node buscarNodoDisponible() {
+        Node nodo = matriz.ocuparNodoAleatorio();
+
+        while (nodo == null) {
+            if (!esperarDemora()) {
+                return null;
+            }
+
+            nodo = matriz.ocuparNodoAleatorio();
+        }
+
+        return nodo;
+    }
+
+    private boolean esperarDemora() {
+        try {
+            Thread.sleep(DEMORA_MS);
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
         }
     }
 }
