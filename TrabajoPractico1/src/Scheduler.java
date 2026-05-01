@@ -38,7 +38,7 @@ public class Scheduler implements Runnable{
                     }
                 }
             }
-            job.setNodoAsignado(nodo); // asigno el nodo al job
+            job.setAssignedNodeId(nodo.getID()); // asigno el nodo al job
             enCola.pushJob(job); // agrego el job a la cola de jobs en espera de validacion
         }
     }

@@ -36,7 +36,7 @@ public class NodeMatrix {
         }
     }
 
-        private Node ocuparNodoAleatorio(){
+        public Node ocuparNodoAleatorio(){
 
 /*
 sheduler necesita saber que nodo ocupar para asignar el job
