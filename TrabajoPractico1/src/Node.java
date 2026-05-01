@@ -18,28 +18,23 @@ Metodos(sujeto a  cambios) :
  */
 
 public class Node {
-    public enum Estado {
-        LIBRE,
-        OCUPADO,
-        FUERA_DE_SERVICIO
-    }
     
     private final int ID; // Atributo para almacenar el ID del Nodo
-    private Estado estado; // Atributo para almacenar el estado del Nodo
+    private EstadoNode estado; // Atributo para almacenar el estado del Nodo
     private int contadorEjecuciones; // Atributo para contar las ejecuciones asignadas al Nodo
     
     public Node(int id) {
         // Constructor para inicializar el Nodo con un ID
         this.ID = id;
-        this.estado = Estado.LIBRE; // Inicializamos el estado como LIBRE por defecto
+        this.estado = EstadoNode.LIBRE; // Inicializamos el estado como LIBRE por defecto
         this.contadorEjecuciones = 0; // Inicializamos el contador de ejecuciones en 0
     }
 
-    public void setEstado(Estado estado){
+    public void setEstado(EstadoNode estado){
         this.estado = estado;
     }
 
-    public Estado getEstado() {
+    public EstadoNode getEstado() {
         // Metodo para obtener el estado actual del Nodo
         return this.estado;
     }
