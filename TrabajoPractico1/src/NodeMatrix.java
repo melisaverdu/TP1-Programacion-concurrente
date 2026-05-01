@@ -36,27 +36,36 @@ public class NodeMatrix {
             nodos[i] = new Node(i); // Inicializamos cada Nodo con un ID único
         }
     
-        public boolean ocupar(){
 
-            LockPrinter.lock();
+        public Node ocuparNodoAleatorio(){
+ /*
+sheduler necesita saber que nodo ocupar para asignar el job
+             
+Tiene que devolver uun Node si logró ocupar uno
+null si justo elijió uno no disponible 
+            
+Me parece que lo mejor es que el scheduler siga intentando hasta que consiga ocupar un nodo, 
+no se queda esperando por uno específico, porque la consigna de esa etapa dice "si el nodo está libre, debe buscar
+otro nodo disponiblñe"
+*/
+            LockPrinter.lock();                                             // adquiero el lock
             try {
+                int randomIndex = (int) (Math.random() * cantidadNodos);    // genero un indice al azar entre 0 y cantidadNodos-1
+                Node nodo = nodos[randomIndex];                             // obtengo el nodo correspondiente al indice generado   
 
-                int randomIndex = (int) (Math.random() * cantidadNodos);
-                Node nodoSeleccionado = nodos[randomIndex];
-                if (nodoSeleccionado.getEstado() == EstadoNode.LIBRE) {
-                    nodoSeleccionado.setEstado(EstadoNode.OCUPADO);
-                    nodoSeleccionado.incrementarContador();
-                    return true; // Nodo ocupado exitosamente
+                if (nodo.getEstado() == EstadoNode.LIBRE) {                 // verifico si el nodo esta libre
+                nodo.setEstado(EstadoNode.OCUPADO);                         // si esta libre, lo ocupo
+                nodo.incrementarContador();                                 // incremento el contador de ejecuciones del nodo 
+                return nodo;                                                // retorno el nodo ocupado
                 }
-                return false; // Nodo ya estaba ocupado
-            } finally {
-                LockPrinter.unlock();
-            }
 
-
+            return null;
+        } finally {
+            LockPrinter.unlock();
         }
-    
-    
-
-
+        }
+    }
 }
+
+
+
