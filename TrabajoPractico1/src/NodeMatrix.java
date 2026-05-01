@@ -23,19 +23,18 @@ Metodos(sujeto a  cambios) :
     public void decommissionNode() -> pone el nodo en "FUERA DE SERVICIO"
  */
 public class NodeMatrix {
-    private ReentrantLock LockPrinter;
-    private final int cantidadNodos;
+    private ReentrantLock LockPrinter = new ReentrantLock();
+    private final int cantidadNodos = 200;
     
-    LockPrinter = new ReentrantLock();
+
     private final Node[] nodos; // Array para almacenar los Nodos
 
-    public NodeMatrix(int cantidadNodos) {
-        this.cantidadNodos = cantidadNodos;
+    public NodeMatrix() {
         this.nodos = new Node[cantidadNodos];
         for (int i = 0; i < cantidadNodos; i++) {
             nodos[i] = new Node(i); // Inicializamos cada Nodo con un ID único
         }
-    
+    }
 
         private Node ocuparNodoAleatorio(){
 
@@ -59,14 +58,13 @@ otro nodo disponiblñe"
                 nodo.incrementarContador();                                 // incremento el contador de ejecuciones del nodo 
                 return nodo;                                                // retorno el nodo ocupado
                 }
+                return null;
+                }
+                finally {
+                LockPrinter.unlock();
+                }
+        }
 
-            return null;
-        } finally {
-            LockPrinter.unlock();
-        }
-        }
-    }
-}
 
     private boolean setFueradeServicio(int idNodo){
         /*
@@ -116,7 +114,8 @@ otro nodo disponiblñe"
         return setFueradeServicio(idNodo);
     }
     
-    
+}
+
 
 
 
