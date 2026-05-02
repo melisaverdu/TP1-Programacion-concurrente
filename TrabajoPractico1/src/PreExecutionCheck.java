@@ -19,9 +19,52 @@ El constructor  recibe como parámetro la matriz de nodos, los jobs en cola, job
 
  */
 
-public class PreExecutionCheck implements Runnable{
+import java.util.concurrent.ThreadLocalRandom;
+
+public class PreExecutionCheck implements Runnable {
+
+    private NodeMatrix nodeMatrix;
+    private JobQueue jobsEnCola;
+    private JobQueue jobsEnEjecucion;
+    private JobQueue jobsFallidos;
+
+    public PreExecutionCheck(NodeMatrix nodeMatrix, JobQueue jobsEnCola,
+                             JobQueue jobsEnEjecucion, JobQueue jobsFallidos) {
+        this.nodeMatrix = nodeMatrix;
+        this.jobsEnCola = jobsEnCola;
+        this.jobsEnEjecucion = jobsEnEjecucion;
+        this.jobsFallidos = jobsFallidos;
+    }
+
     @Override
     public void run() {
 
+        while (true) {
+
+            Job job = jobsEnCola.popRandomJob();
+
+            if (job == null) {
+                break;
+            }
+
+            int nodoId = job.getAssignedNodeId();
+
+            if (ThreadLocalRandom.current().nextInt(100) < 15) {
+                nodeMatrix.sacarDeServicio(nodoId);
+                job.setEstado(EstadoJob.FALLIDO);
+                jobsFallidos.pushJob(job);
+            } else {
+                nodeMatrix.desocuparNodo(nodoId);
+                job.setEstado(EstadoJob.EN_EJECUCION);
+                jobsEnEjecucion.pushJob(job);
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
     }
 }
