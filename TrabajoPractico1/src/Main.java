@@ -4,6 +4,7 @@ Hilo principal
 public class Main {
     private static final int CANTIDAD_JOBS = 500;
     private static final int CANTIDAD_SCHEDULERS = 3;
+    private static final int CANTIDAD_PREEXECUTION = 2;
 
     public static void main(String[] args) {
         JobQueue creados = new JobQueue();                  // Cola de jobs creados
@@ -33,5 +34,20 @@ public class Main {
         */
         System.out.println("Sistema inicializado con " + CANTIDAD_JOBS + " jobs y " + CANTIDAD_SCHEDULERS + " schedulers.");
 
+    
+     Thread[] validatorThreads = new Thread[CANTIDAD_PREEXECUTION];
+
+        for (int i = 0; i < CANTIDAD_PREEXECUTION; i++) {
+            validatorThreads[i] = new Thread(
+                new PreExecutionCheck(matriz, enCola, enEjecucion, fallidos),
+                "PreExecutionCheck-" + (i + 1)
+            );
+        }
+
+       
+        for (Thread t : schedulerThreads) t.start();
+        for (Thread t : validatorThreads) t.start();
+
+        System.out.println("Sistema en ejecución...");
     }
 }
