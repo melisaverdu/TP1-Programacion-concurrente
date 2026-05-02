@@ -13,9 +13,43 @@ Si el Job tiene un Error -> pasa a JobsFallidos
 
  */
 
-public class WorkerExecution implements Runnable{
+import java.util.concurrent.ThreadLocalRandom;
+
+public class WorkerExecution implements Runnable {
+
+    private static final int DEMORA_MS = 100;
+
+    private final JobQueue jobsEnEjecucion;
+    private final JobQueue jobsFinalizados;
+    private final JobQueue jobsFallidos;
+
+    public WorkerExecution(JobQueue jobsEnEjecucion, JobQueue jobsFinalizados, JobQueue jobsFallidos) {
+        this.jobsEnEjecucion = jobsEnEjecucion;
+        this.jobsFinalizados = jobsFinalizados;
+        this.jobsFallidos = jobsFallidos;
+    }
+
     @Override
     public void run() {
+        Job job = jobsEnEjecucion.popJob();
 
+        while (job != null) {
+            if (ThreadLocalRandom.current().nextInt(100) < 10) {
+                job.setEstado(EstadoJob.FALLIDO);
+                jobsFallidos.pushJob(job);
+            } else {
+                job.setEstado(EstadoJob.FINALIZADO);
+                jobsFinalizados.pushJob(job);
+            }
+
+            try {
+                Thread.sleep(DEMORA_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+
+            job = jobsEnEjecucion.popJob();
+        }
     }
 }
