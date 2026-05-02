@@ -5,6 +5,7 @@ public class Main {
     private static final int CANTIDAD_JOBS = 500;
     private static final int CANTIDAD_SCHEDULERS = 3;
     private static final int CANTIDAD_PREEXECUTION = 2;
+    private static final int CANTIDAD_POSTPROCESSING = 2;
 
     public static void main(String[] args) {
         JobQueue creados = new JobQueue();                  // Cola de jobs creados
@@ -44,10 +45,21 @@ public class Main {
             );
         }
 
-       
+
+        Thread[] postProcessingThreads = new Thread[CANTIDAD_POSTPROCESSING];
+        for (int i = 0; i < CANTIDAD_POSTPROCESSING; i++) {
+            postProcessingThreads[i] = new Thread(
+                new PostProcessing(finalizados, validados, fallidos),
+                "PostProcessing-" + (i + 1)
+            );
+        }
+
         for (Thread t : schedulerThreads) t.start();
         for (Thread t : validatorThreads) t.start();
+        for (Thread t : postProcessingThreads) t.start();
 
         System.out.println("Sistema en ejecución...");
+        
+
     }
 }
