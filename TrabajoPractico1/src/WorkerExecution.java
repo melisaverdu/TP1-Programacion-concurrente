@@ -7,7 +7,7 @@ Ejecutado por 3 hilos
 - Simula su ejecucion con probabilidad -> 90% exito
                                        -> 10% error en ejecucion
 
-Si el Job es exitoso -> pasa a JobsValidados
+Si el Job es exitoso -> pasa a JobsFinalizados
 
 Si el Job tiene un Error -> pasa a JobsFallidos
 

@@ -1,0 +1,3 @@
+public enum EstadoJob {
+    EN_COLA, EN_EJECUCION, FINALIZADO, FALLIDO, VALIDADO
+}

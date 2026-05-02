@@ -2,9 +2,9 @@
 Es una clase simple, representa a un Nodo
 
 Atributos que debe tener:
-    ID (int) -> para que sea unico y recnocible
+    ID (int) -> para que sea unico y reconocible
     Estado(String) -> "LIBRE" , "OCUPADO" , "FUERA DE SERVICIO"
-    contador de ejecuciones (int) ->
+    contador de ejecuciones (int) -> se incrementa cada vez que se asigna un Job al nodo, se utiliza para el algoritmo de asignacion de Jobs
 
 Metodos(sujeto a  cambios) :
     public String getEstado -> No recibe parametros
@@ -15,7 +15,44 @@ Metodos(sujeto a  cambios) :
 
     public void incrementarContador -> no recibe parametros
                                     -> incrementa en +1 el contador de ejecuciones
+
+    public setID -> establece el ID del job
  */
 
 public class Node {
+    
+    private final int ID; // Atributo para almacenar el ID del Nodo
+    private EstadoNode estado; // Atributo para almacenar el estado del Nodo
+    private int contadorEjecuciones; // Atributo para contar las ejecuciones asignadas al Nodo
+    
+    public Node(int id) {
+        // Constructor para inicializar el Nodo con un ID
+        this.ID = id;
+        this.estado = EstadoNode.LIBRE; // Inicializamos el estado como LIBRE por defecto
+        this.contadorEjecuciones = 0; // Inicializamos el contador de ejecuciones en 0
+    }
+
+    public void setEstado(EstadoNode estado){
+        this.estado = estado;
+    }
+
+    public EstadoNode getEstado() {
+        // Metodo para obtener el estado actual del Nodo
+        return this.estado;
+    }
+
+    public int getID() {
+        // Metodo para obtener el ID del Nodo
+        return this.ID;
+    }
+
+    public void incrementarContador() {
+        // Metodo para incrementar el contador de ejecuciones en +1
+        this.contadorEjecuciones++;
+    }
+
+    public int getContadorEjecuciones() {
+        // Metodo para obtener el contador de ejecuciones
+        return this.contadorEjecuciones;
+    }
 }
