@@ -40,8 +40,14 @@ public class PreExecutionCheck implements Runnable {
     public void run() {
 
         while (true) {
+            Job job;
 
-            Job job = jobsEnCola.popRandomJob();
+            try {
+                job = jobsEnCola.popRandomJobBlocking();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
 
             if (job == null) {
                 break;

@@ -31,9 +31,20 @@ public class WorkerExecution implements Runnable {
 
     @Override
     public void run() {
-        Job job = jobsEnEjecucion.popJob();
+        while (true) {
+            Job job;
 
-        while (job != null) {
+            try {
+                job = jobsEnEjecucion.popJobBlocking();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+
+            if (job == null) {
+                return;
+            }
+
             if (ThreadLocalRandom.current().nextInt(100) < 10) {
                 job.setEstado(EstadoJob.FALLIDO);
                 jobsFallidos.pushJob(job);
@@ -48,8 +59,6 @@ public class WorkerExecution implements Runnable {
                 Thread.currentThread().interrupt();
                 return;
             }
-
-            job = jobsEnEjecucion.popJob();
         }
     }
 }
