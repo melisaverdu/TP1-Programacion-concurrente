@@ -27,8 +27,14 @@ public class PostProcessing implements Runnable{
     @Override
     public void run() {
         while (true) {
+            Job job;
 
-            Job job = jobsFinalizados.popRandomJob();
+            try {
+                job = jobsFinalizados.popRandomJobBlocking();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
 
             if (job == null) {
                 break;
