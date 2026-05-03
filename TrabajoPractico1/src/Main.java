@@ -1,14 +1,41 @@
 /*
 Hilo principal
 */
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class Main {
     private static final int CANTIDAD_JOBS = 500;
     private static final int CANTIDAD_SCHEDULERS = 3;
     private static final int CANTIDAD_PREEXECUTION = 2;
     private static final int CANTIDAD_EJECUTORES = 10;
     private static final int CANTIDAD_POSTPROCESSING = 2;
+    private static final Path LOG_DIRECTORY = Path.of("logs");
+    private static final DateTimeFormatter LOG_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final DateTimeFormatter LOG_FILE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     public static void main(String[] args) {
+        try {
+            Path logPath = crearRutaLog();
+            try (PrintWriter log = new PrintWriter(Files.newBufferedWriter(logPath), true)) {
+                ejecutarSistema(log);
+            }
+        } catch (IOException e) {
+            System.err.println("No se pudo crear/escribir el archivo de log: " + e.getMessage());
+        }
+    }
+
+    private static Path crearRutaLog() throws IOException {
+        Files.createDirectories(LOG_DIRECTORY);
+        String fechaInicio = LocalDateTime.now().format(LOG_FILE_FORMATTER);
+        return LOG_DIRECTORY.resolve("log_ejecucion_" + fechaInicio + ".txt");
+    }
+
+    private static void ejecutarSistema(PrintWriter log) {
         JobQueue creados = new JobQueue(); // Cola de jobs creados
         JobQueue enCola = new JobQueue(); // Cola de jobs en espera de validacion
         JobQueue enEjecucion = new JobQueue(); // Cola de jobs en ejecucion
@@ -55,23 +82,24 @@ public class Main {
 
         for (Thread t : schedulerThreads)
             t.start();
-        System.out.println("Schedulers iniciados...");
+        registrar(log, "Schedulers iniciados...");
         for (Thread t : validatorThreads)
             t.start();
-        System.out.println("PreExecutionChecks iniciados...");
+        registrar(log, "PreExecutionChecks iniciados...");
         for (Thread t : workerExecutionThreads)
             t.start();
-        System.out.println("WorkerExecutions iniciados...");
+        registrar(log, "WorkerExecutions iniciados...");
         for (Thread t : postProcessingThreads)
             t.start();
-        System.out.println("PostProcessings iniciados...");
+        registrar(log, "PostProcessings iniciados...");
 
-        System.out.println("Sistema en ejecución...");
+        registrar(log, "Sistema en ejecucion...");
 
         while (validados.size() + fallidos.size() < CANTIDAD_JOBS) {
             try {
                 Thread.sleep(200);
-                System.out.println("Jobs en cola: " + enCola.size() + "| Jobs validados: " + validados.size()
+                registrar(log, "Jobs en cola: " + enCola.size()
+                        + " | Jobs validados: " + validados.size()
                         + " | Jobs fallidos: " + fallidos.size());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -90,7 +118,13 @@ public class Main {
 
         esperarHilos(postProcessingThreads);
 
-        System.out.println("Sistema finalizado.");
+        registrar(log, "Sistema finalizado.");
+    }
+
+    private static void registrar(PrintWriter log, String mensaje) {
+        String mensajeConFecha = "[" + LocalDateTime.now().format(LOG_FORMATTER) + "] " + mensaje;
+        System.out.println(mensaje);
+        log.println(mensajeConFecha);
     }
 
     private static void esperarHilos(Thread[] threads) {
