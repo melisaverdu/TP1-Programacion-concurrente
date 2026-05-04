@@ -12,7 +12,7 @@ public class Main {
     private static final int CANTIDAD_JOBS = 500;
     private static final int CANTIDAD_SCHEDULERS = 3;
     private static final int CANTIDAD_PREEXECUTION = 2;
-    private static final int CANTIDAD_EJECUTORES = 10;
+    private static final int CANTIDAD_EJECUTORES = 3;
     private static final int CANTIDAD_POSTPROCESSING = 2;
     private static final Path LOG_DIRECTORY = Path.of("logs");
     private static final DateTimeFormatter LOG_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
