@@ -120,6 +120,7 @@ public class Main {
         esperarHilos(postProcessingThreads);
 
         double tiempoTotalSegundos = (System.nanoTime() - tiempoInicio) / 1_000_000_000.0;
+        registrarEstadisticasNodos(log, matriz);
         registrar(log, String.format("Sistema finalizado. Tiempo de ejecucion: %.2f segundos.", tiempoTotalSegundos));
     }
 
@@ -127,6 +128,17 @@ public class Main {
         String mensajeConFecha = "[" + LocalDateTime.now().format(LOG_FORMATTER) + "] " + mensaje;
         System.out.println(mensaje);
         log.println(mensajeConFecha);
+    }
+
+    private static void registrarEstadisticasNodos(PrintWriter log, NodeMatrix matriz) {
+        registrar(log, "Estadisticas de nodos:");
+        String[] lineas = matriz.obtenerEstadisticasNodos().split("\\R");
+
+        for (String linea : lineas) {
+            if (!linea.isEmpty()) {
+                registrar(log, linea);
+            }
+        }
     }
 
     private static void esperarHilos(Thread[] threads) {
