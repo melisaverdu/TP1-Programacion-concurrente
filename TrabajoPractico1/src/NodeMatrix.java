@@ -1,4 +1,3 @@
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /*
@@ -119,6 +118,77 @@ public class NodeMatrix {
          * servicio.
          */
         return setFueradeServicio(idNodo);
+    }
+
+    public String obtenerEstadisticasNodos() {
+        LockPrinter.lock();
+        try {
+            int libres = 0;
+            int ocupados = 0;
+            int fueraDeServicio = 0;
+            int totalEjecuciones = 0;
+            int nodosSinEjecuciones = 0;
+            int maxEjecuciones = 0;
+
+            for (Node nodo : nodos) {
+                if (nodo.getEstado() == EstadoNode.LIBRE) {
+                    libres++;
+                } else if (nodo.getEstado() == EstadoNode.OCUPADO) {
+                    ocupados++;
+                } else if (nodo.getEstado() == EstadoNode.FUERA_DE_SERVICIO) {
+                    fueraDeServicio++;
+                }
+
+                int ejecuciones = nodo.getContadorEjecuciones();
+                totalEjecuciones += ejecuciones;
+
+                if (ejecuciones == 0) {
+                    nodosSinEjecuciones++;
+                }
+
+                if (ejecuciones > maxEjecuciones) {
+                    maxEjecuciones = ejecuciones;
+                }
+            }
+
+            StringBuilder estadisticas = new StringBuilder();
+            estadisticas.append("Total de nodos: ").append(cantidadNodos).append(System.lineSeparator());
+            estadisticas.append("Nodos libres: ").append(libres).append(System.lineSeparator());
+            estadisticas.append("Nodos ocupados: ").append(ocupados).append(System.lineSeparator());
+            estadisticas.append("Nodos fuera de servicio: ").append(fueraDeServicio).append(System.lineSeparator());
+            estadisticas.append("Total de asignaciones a nodos: ").append(totalEjecuciones).append(System.lineSeparator());
+            estadisticas.append("Nodos sin ejecuciones asignadas: ").append(nodosSinEjecuciones).append(System.lineSeparator());
+            estadisticas.append("Mayor cantidad de ejecuciones en un nodo: ").append(maxEjecuciones).append(System.lineSeparator());
+            estadisticas.append("Nodos con mayor cantidad de ejecuciones: ");
+
+            boolean primero = true;
+            for (Node nodo : nodos) {
+                if (nodo.getContadorEjecuciones() == maxEjecuciones) {
+                    if (!primero) {
+                        estadisticas.append(", ");
+                    }
+                    estadisticas.append(nodo.getID());
+                    primero = false;
+                }
+            }
+
+            estadisticas.append(System.lineSeparator());
+            estadisticas.append("Detalle por nodo:").append(System.lineSeparator());
+
+            for (Node nodo : nodos) {
+                estadisticas.append("Nodo ")
+                        .append(nodo.getID())
+                        .append(" | Estado: ")
+                        .append(nodo.getEstado())
+                        .append(" | Ejecuciones: ")
+                        .append(nodo.getContadorEjecuciones())
+                        .append(System.lineSeparator());
+            }
+
+            return estadisticas.toString();
+        } finally {
+            LockPrinter.unlock();
+        }
     }
 
 }
