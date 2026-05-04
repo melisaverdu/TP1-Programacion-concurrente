@@ -1,0 +1,278 @@
+@startuml DiagramaSecuenciaTP1Completo
+
+title TP1 - Diagrama de secuencia completo del procesamiento concurrente de Jobs
+
+actor Usuario
+participant "Main" as Main
+participant "Files / Path" as FS
+participant "LocalDateTime\nDateTimeFormatter" as Fecha
+database "Archivo de log" as Log
+participant "JobQueue\ncreados" as Creados
+participant "JobQueue\nenCola" as EnCola
+participant "JobQueue\nenEjecucion" as EnEjecucion
+participant "JobQueue\nfinalizados" as Finalizados
+participant "JobQueue\nfallidos" as Fallidos
+participant "JobQueue\nvalidados" as Validados
+participant "NodeMatrix\n200 nodos" as Matriz
+participant "Scheduler\n3 hilos" as Scheduler
+participant "PreExecutionCheck\n2 hilos" as PreCheck
+participant "WorkerExecution\n10 hilos" as Worker
+participant "PostProcessing\n2 hilos" as Post
+participant "Thread[]" as Threads
+
+== Inicializacion del sistema ==
+
+Usuario -> Main : Ejecutar main()
+activate Main
+
+Main -> Main : crearRutaLog()
+Main -> FS : Files.createDirectories(LOG_DIRECTORY)
+Main -> Fecha : LocalDateTime.now().format(LOG_FILE_FORMATTER)
+Fecha --> Main : fechaInicio
+Main -> FS : LOG_DIRECTORY.resolve("log_ejecucion_" + fechaInicio + ".txt")
+FS --> Main : logPath
+Main -> Log : new PrintWriter(Files.newBufferedWriter(logPath), true)
+Main -> Main : ejecutarSistema(log)
+Main -> Main : tiempoInicio = System.nanoTime()
+
+Main -> Creados : new JobQueue()
+Main -> EnCola : new JobQueue()
+Main -> EnEjecucion : new JobQueue()
+Main -> Finalizados : new JobQueue()
+Main -> Fallidos : new JobQueue()
+Main -> Validados : new JobQueue()
+Main -> Matriz : new NodeMatrix()
+
+loop 500 jobs
+    Main -> Creados : pushJob(new Job(id, EN_COLA))
+    Creados -> Creados : addLast(job)\nnotifyAll()
+end
+
+Main -> Scheduler : new Scheduler(enCola, creados, matriz)
+
+loop 3 schedulers
+    Main -> Threads : new Thread(scheduler, "Scheduler-i")
+end
+
+loop 2 pre-execution checks
+    Main -> PreCheck : new PreExecutionCheck(matriz, enCola, enEjecucion, fallidos)
+    Main -> Threads : new Thread(preCheck, "PreExecutionCheck-i")
+end
+
+loop 10 workers
+    Main -> Worker : new WorkerExecution(enEjecucion, finalizados, fallidos)
+    Main -> Threads : new Thread(worker, "WorkerExecution-i")
+end
+
+loop 2 post-processings
+    Main -> Post : new PostProcessing(finalizados, validados, fallidos)
+    Main -> Threads : new Thread(post, "PostProcessing-i")
+end
+
+== Inicio de hilos ==
+
+Main -> Threads : start() Scheduler x 3
+Main -> Log : "Schedulers iniciados..."
+
+Main -> Threads : start() PreExecutionCheck x 2
+Main -> Log : "PreExecutionChecks iniciados..."
+
+Main -> Threads : start() WorkerExecution x 10
+Main -> Log : "WorkerExecutions iniciados..."
+
+Main -> Threads : start() PostProcessing x 2
+Main -> Log : "PostProcessings iniciados..."
+
+Main -> Log : "Sistema en ejecucion..."
+
+par Etapa 1 - Scheduler
+    loop Mientras existan jobs creados
+        Scheduler -> Creados : popJob()
+        Creados --> Scheduler : job / null
+
+        alt Hay job
+            loop Hasta conseguir nodo libre
+                Scheduler -> Matriz : ocuparNodoAleatorio()
+                activate Matriz
+                Matriz -> Matriz : lock()
+
+                alt Nodo libre
+                    Matriz -> Matriz : estado = OCUPADO
+                    Matriz -> Matriz : incrementarContador()
+                    Matriz --> Scheduler : nodo ocupado
+                else Nodo ocupado o fuera de servicio
+                    Matriz --> Scheduler : null
+                end
+
+                Matriz -> Matriz : unlock()
+                deactivate Matriz
+
+                opt No se obtuvo nodo
+                    Scheduler -> Scheduler : sleep(100 ms)
+                end
+            end
+
+            Scheduler -> Scheduler : job.setAssignedNodeId(nodo.ID)
+            Scheduler -> Scheduler : job.setEstado(EN_COLA)
+            Scheduler -> EnCola : pushJob(job)
+            EnCola -> EnCola : notifyAll()
+            Scheduler -> Scheduler : sleep(100 ms)
+        else No quedan jobs creados
+            Scheduler -> Scheduler : finalizar hilo
+        end
+    end
+
+else Etapa 2 - PreExecutionCheck
+    loop Mientras enCola este abierta o tenga jobs
+        PreCheck -> EnCola : popRandomJobBlocking()
+        activate EnCola
+
+        alt Cola vacia y abierta
+            EnCola -> EnCola : wait()
+            EnCola --> PreCheck : job al recibir notifyAll()
+        else Cola con jobs
+            EnCola --> PreCheck : job aleatorio
+        else Cola cerrada y vacia
+            EnCola --> PreCheck : null
+        end
+        deactivate EnCola
+
+        alt job == null
+            PreCheck -> PreCheck : finalizar hilo
+        else job recibido
+            PreCheck -> PreCheck : nodoId = job.getAssignedNodeId()
+
+            alt Job invalido (15%)
+                PreCheck -> Matriz : sacarDeServicio(nodoId)
+                activate Matriz
+                Matriz -> Matriz : lock()
+                Matriz -> Matriz : nodo.estado = FUERA_DE_SERVICIO
+                Matriz -> Matriz : unlock()
+                deactivate Matriz
+
+                PreCheck -> PreCheck : job.setEstado(FALLIDO)
+                PreCheck -> Fallidos : pushJob(job)
+                Fallidos -> Fallidos : notifyAll()
+            else Job valido (85%)
+                PreCheck -> Matriz : desocuparNodo(nodoId)
+                activate Matriz
+                Matriz -> Matriz : lock()
+                Matriz -> Matriz : nodo.estado = LIBRE
+                Matriz -> Matriz : unlock()
+                deactivate Matriz
+
+                PreCheck -> PreCheck : job.setEstado(EN_EJECUCION)
+                PreCheck -> EnEjecucion : pushJob(job)
+                EnEjecucion -> EnEjecucion : notifyAll()
+            end
+
+            PreCheck -> PreCheck : sleep(100 ms)
+        end
+    end
+
+else Etapa 3 - WorkerExecution
+    loop Mientras enEjecucion este abierta o tenga jobs
+        Worker -> EnEjecucion : popJobBlocking()
+        activate EnEjecucion
+
+        alt Cola vacia y abierta
+            EnEjecucion -> EnEjecucion : wait()
+            EnEjecucion --> Worker : job al recibir notifyAll()
+        else Cola con jobs
+            EnEjecucion --> Worker : primer job
+        else Cola cerrada y vacia
+            EnEjecucion --> Worker : null
+        end
+        deactivate EnEjecucion
+
+        alt job == null
+            Worker -> Worker : finalizar hilo
+        else job recibido
+            alt Error de ejecucion (10%)
+                Worker -> Worker : job.setEstado(FALLIDO)
+                Worker -> Fallidos : pushJob(job)
+                Fallidos -> Fallidos : notifyAll()
+            else Ejecucion exitosa (90%)
+                Worker -> Worker : job.setEstado(FINALIZADO)
+                Worker -> Finalizados : pushJob(job)
+                Finalizados -> Finalizados : notifyAll()
+            end
+
+            Worker -> Worker : sleep(100 ms)
+        end
+    end
+
+else Etapa 4 - PostProcessing
+    loop Mientras finalizados este abierta o tenga jobs
+        Post -> Finalizados : popRandomJobBlocking()
+        activate Finalizados
+
+        alt Cola vacia y abierta
+            Finalizados -> Finalizados : wait()
+            Finalizados --> Post : job al recibir notifyAll()
+        else Cola con jobs
+            Finalizados --> Post : job aleatorio
+        else Cola cerrada y vacia
+            Finalizados --> Post : null
+        end
+        deactivate Finalizados
+
+        alt job == null
+            Post -> Post : finalizar hilo
+        else job recibido
+            alt Resultado inconsistente (5%)
+                Post -> Post : job.setEstado(FALLIDO)
+                Post -> Fallidos : pushJob(job)
+                Fallidos -> Fallidos : notifyAll()
+            else Resultado correcto (95%)
+                Post -> Post : job.setEstado(VALIDADO)
+                Post -> Validados : pushJob(job)
+                Validados -> Validados : notifyAll()
+            end
+
+            Post -> Post : sleep(100 ms)
+        end
+    end
+
+else Monitoreo del Main
+    loop Mientras validados.size() + fallidos.size() < 500
+        Main -> Main : sleep(200 ms)
+        Main -> EnCola : size()
+        EnCola --> Main : cantidad en cola
+        Main -> Validados : size()
+        Validados --> Main : cantidad validados
+        Main -> Fallidos : size()
+        Fallidos --> Main : cantidad fallidos
+        Main -> Fecha : LocalDateTime.now().format(LOG_FORMATTER)
+        Fecha --> Main : fecha para log
+        Main -> Log : Registrar estado del sistema
+    end
+end
+
+== Cierre ordenado de etapas ==
+
+Main -> Threads : join() Scheduler x 3
+Threads --> Main : schedulers finalizados
+Main -> EnCola : close()
+EnCola -> EnCola : closed = true\nnotifyAll()
+
+Main -> Threads : join() PreExecutionCheck x 2
+Threads --> Main : validadores finalizados
+Main -> EnEjecucion : close()
+EnEjecucion -> EnEjecucion : closed = true\nnotifyAll()
+
+Main -> Threads : join() WorkerExecution x 10
+Threads --> Main : workers finalizados
+Main -> Finalizados : close()
+Finalizados -> Finalizados : closed = true\nnotifyAll()
+
+Main -> Threads : join() PostProcessing x 2
+Threads --> Main : post-processors finalizados
+
+Main -> Main : tiempoTotal = System.nanoTime() - tiempoInicio
+Main -> Fecha : LocalDateTime.now().format(LOG_FORMATTER)
+Fecha --> Main : fecha para log final
+Main -> Log : "Sistema finalizado. Tiempo de ejecucion: %.2f segundos."
+deactivate Main
+
+@enduml
