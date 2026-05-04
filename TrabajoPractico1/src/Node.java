@@ -19,26 +19,58 @@ Metodos(sujeto a  cambios) :
     public setID -> establece el ID del job
  */
 
+import java.util.concurrent.locks.ReentrantLock;
+
 public class Node {
     
     private final int ID; // Atributo para almacenar el ID del Nodo
     private EstadoNode estado; // Atributo para almacenar el estado del Nodo
     private int contadorEjecuciones; // Atributo para contar las ejecuciones asignadas al Nodo
+    private final ReentrantLock lock; // Protege el estado y contador de este nodo
     
     public Node(int id) {
         // Constructor para inicializar el Nodo con un ID
         this.ID = id;
         this.estado = EstadoNode.LIBRE; // Inicializamos el estado como LIBRE por defecto
         this.contadorEjecuciones = 0; // Inicializamos el contador de ejecuciones en 0
+        this.lock = new ReentrantLock();
     }
 
-    public void setEstado(EstadoNode estado){
-        this.estado = estado;
+    public boolean intentarOcupar() {
+        if (!lock.tryLock()) {
+            return false;
+        }
+
+        try {
+            if (estado != EstadoNode.LIBRE) {
+                return false;
+            }
+
+            estado = EstadoNode.OCUPADO;
+            contadorEjecuciones++;
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void setEstado(EstadoNode estado) {
+        lock.lock();
+        try {
+            this.estado = estado;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public EstadoNode getEstado() {
-        // Metodo para obtener el estado actual del Nodo
-        return this.estado;
+        lock.lock();
+        try {
+            // Metodo para obtener el estado actual del Nodo
+            return this.estado;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public int getID() {
@@ -47,12 +79,22 @@ public class Node {
     }
 
     public void incrementarContador() {
-        // Metodo para incrementar el contador de ejecuciones en +1
-        this.contadorEjecuciones++;
+        lock.lock();
+        try {
+            // Metodo para incrementar el contador de ejecuciones en +1
+            this.contadorEjecuciones++;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public int getContadorEjecuciones() {
-        // Metodo para obtener el contador de ejecuciones
-        return this.contadorEjecuciones;
+        lock.lock();
+        try {
+            // Metodo para obtener el contador de ejecuciones
+            return this.contadorEjecuciones;
+        } finally {
+            lock.unlock();
+        }
     }
 }
