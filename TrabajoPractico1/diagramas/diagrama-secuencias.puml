@@ -16,7 +16,7 @@ participant "JobQueue\nvalidados" as Validados
 participant "NodeMatrix\n200 nodos" as Matriz
 participant "Scheduler\n3 hilos" as Scheduler
 participant "PreExecutionCheck\n2 hilos" as PreCheck
-participant "WorkerExecution\n10 hilos" as Worker
+participant "WorkerExecution\n3 hilos" as Worker
 participant "PostProcessing\n2 hilos" as Post
 participant "Thread[]" as Threads
 
@@ -59,7 +59,7 @@ loop 2 pre-execution checks
     Main -> Threads : new Thread(preCheck, "PreExecutionCheck-i")
 end
 
-loop 10 workers
+loop 3 workers
     Main -> Worker : new WorkerExecution(enEjecucion, finalizados, fallidos)
     Main -> Threads : new Thread(worker, "WorkerExecution-i")
 end
@@ -77,7 +77,7 @@ Main -> Log : "Schedulers iniciados..."
 Main -> Threads : start() PreExecutionCheck x 2
 Main -> Log : "PreExecutionChecks iniciados..."
 
-Main -> Threads : start() WorkerExecution x 10
+Main -> Threads : start() WorkerExecution x 3
 Main -> Log : "WorkerExecutions iniciados..."
 
 Main -> Threads : start() PostProcessing x 2
@@ -261,7 +261,7 @@ Threads --> Main : validadores finalizados
 Main -> EnEjecucion : close()
 EnEjecucion -> EnEjecucion : closed = true\nnotifyAll()
 
-Main -> Threads : join() WorkerExecution x 10
+Main -> Threads : join() WorkerExecution x 3
 Threads --> Main : workers finalizados
 Main -> Finalizados : close()
 Finalizados -> Finalizados : closed = true\nnotifyAll()
@@ -270,6 +270,25 @@ Main -> Threads : join() PostProcessing x 2
 Threads --> Main : post-processors finalizados
 
 Main -> Main : tiempoTotal = System.nanoTime() - tiempoInicio
+Main -> Main : registrarEstadisticasNodos(log, matriz)
+Main -> Fecha : LocalDateTime.now().format(LOG_FORMATTER)
+Fecha --> Main : fecha para log
+Main -> Log : "Estadisticas de nodos:"
+Main -> Matriz : obtenerEstadisticasNodos()
+activate Matriz
+Matriz -> Matriz : lock()
+Matriz -> Matriz : contar estados y ejecuciones\nde los 200 nodos
+Matriz -> Matriz : construir detalle por nodo
+Matriz -> Matriz : unlock()
+Matriz --> Main : estadisticas
+deactivate Matriz
+
+loop Por cada linea no vacia
+    Main -> Fecha : LocalDateTime.now().format(LOG_FORMATTER)
+    Fecha --> Main : fecha para log
+    Main -> Log : registrar(linea)
+end
+
 Main -> Fecha : LocalDateTime.now().format(LOG_FORMATTER)
 Fecha --> Main : fecha para log final
 Main -> Log : "Sistema finalizado. Tiempo de ejecucion: %.2f segundos."

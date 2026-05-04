@@ -46,6 +46,7 @@ class Main {
     - {static} crearRutaLog() : Path
     - {static} ejecutarSistema(log : PrintWriter) : void
     - {static} registrar(log : PrintWriter, mensaje : String) : void
+    - {static} registrarEstadisticasNodos(log : PrintWriter, matriz : NodeMatrix) : void
     - {static} esperarHilos(threads : Thread[]) : void
 }
 
@@ -97,6 +98,7 @@ class NodeMatrix {
     - setLibre(idNodo : int) : boolean
     + desocuparNodo(idNodo : int) : boolean
     + sacarDeServicio(idNodo : int) : boolean
+    + obtenerEstadisticasNodos() : String
 }
 
 class Scheduler {
@@ -138,10 +140,10 @@ class PostProcessing {
 
 Main ..> Job : crea 500 jobs
 Main ..> JobQueue : crea colas
-Main ..> NodeMatrix : crea matriz
+Main ..> NodeMatrix : crea matriz y obtiene estadisticas
 Main ..> Scheduler : crea 3 hilos
 Main ..> PreExecutionCheck : crea 2 hilos
-Main ..> WorkerExecution : crea 10 hilos
+Main ..> WorkerExecution : crea 3 hilos
 Main ..> PostProcessing : crea 2 hilos
 Main ..> Thread : inicia y espera hilos
 Main ..> PrintWriter : registra logs
@@ -212,7 +214,8 @@ note right of NodeMatrix
 
   Usa ReentrantLock para asegurar
   exclusion mutua al ocupar, liberar
-  o sacar nodos de servicio.
+  o sacar nodos de servicio y obtener
+  estadisticas.
 end note
 
 note bottom of Main
@@ -225,7 +228,8 @@ note bottom of Main
   etapas con close() y join().
 
   Tambien crea un archivo de log
-  con fecha y hora de ejecucion.
+  con fecha y hora de ejecucion y
+  registra estadisticas finales de nodos.
 end note
 
 note bottom of Scheduler
