@@ -36,6 +36,7 @@ public class Main {
     }
 
     private static void ejecutarSistema(PrintWriter log) {
+        long tiempoInicio = System.nanoTime();
         JobQueue creados = new JobQueue(); // Cola de jobs creados
         JobQueue enCola = new JobQueue(); // Cola de jobs en espera de validacion
         JobQueue enEjecucion = new JobQueue(); // Cola de jobs en ejecucion
@@ -118,7 +119,8 @@ public class Main {
 
         esperarHilos(postProcessingThreads);
 
-        registrar(log, "Sistema finalizado.");
+        double tiempoTotalSegundos = (System.nanoTime() - tiempoInicio) / 1_000_000_000.0;
+        registrar(log, String.format("Sistema finalizado. Tiempo de ejecucion: %.2f segundos.", tiempoTotalSegundos));
     }
 
     private static void registrar(PrintWriter log, String mensaje) {
