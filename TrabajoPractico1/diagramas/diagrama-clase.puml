@@ -143,7 +143,7 @@ class PostProcessing {
 
 Main ..> Job : crea 500 jobs
 Main ..> JobQueue : crea colas
-Main ..> NodeMatrix : crea matriz
+Main ..> NodeMatrix : crea matriz y obtiene estadisticas
 Main ..> Scheduler : crea 3 hilos
 Main ..> PreExecutionCheck : crea 2 hilos
 Main ..> WorkerExecution : crea 3 hilos
