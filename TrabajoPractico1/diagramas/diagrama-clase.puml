@@ -1,10 +1,10 @@
-@startuml DiagramaClasesTP1Completo
-
-title TP1 - Diagrama de clases completo
+@startuml
+title Diagrama de clases - Sistema concurrente de Jobs
 
 skinparam classAttributeIconSize 0
-skinparam shadowing false
 skinparam linetype ortho
+
+' ================= ENUMS =================
 
 enum EstadoJob {
     EN_COLA
@@ -20,116 +20,72 @@ enum EstadoNode {
     FUERA_DE_SERVICIO
 }
 
+' ================= INTERFACES =================
+
 interface Runnable {
     + run() : void
 }
 
-class Thread
-class PrintWriter
-class Files
-class Path
-class DateTimeFormatter
-class LocalDateTime
-class LinkedList<E>
-class ReentrantLock
-class ThreadLocalRandom
-class StringBuilder
-
-class Main {
-    - {static} CANTIDAD_JOBS : int
-    - {static} CANTIDAD_SCHEDULERS : int
-    - {static} CANTIDAD_PREEXECUTION : int
-    - {static} CANTIDAD_EJECUTORES : int
-    - {static} CANTIDAD_POSTPROCESSING : int
-    - {static} LOG_DIRECTORY : Path
-    - {static} LOG_FORMATTER : DateTimeFormatter
-    - {static} LOG_FILE_FORMATTER : DateTimeFormatter
-    + {static} main(args : String[]) : void
-    - {static} crearRutaLog() : Path
-    - {static} ejecutarSistema(log : PrintWriter) : void
-    - {static} registrar(log : PrintWriter, mensaje : String) : void
-    - {static} registrarEstadisticasNodos(log : PrintWriter, matriz : NodeMatrix) : void
-    - {static} esperarHilos(threads : Thread[]) : void
-}
+' ================= CLASES PRINCIPALES =================
 
 class Job {
-    - ID : int
+    - id : int
     - estado : EstadoJob
     - nodoAsignado : int
-    + Job(id : int, estado : EstadoJob)
     + getEstado() : EstadoJob
-    + setEstado(nuevoEstado : EstadoJob) : void
+    + setEstado(e : EstadoJob) : void
     + getID() : int
-    + getAssignedNodeId() : int
-    + setAssignedNodeId(assignedNodeId : int) : void
+    + setAssignedNodeId(id : int) : void
 }
 
 class JobQueue {
-    - queue : LinkedList<Job>
+    - queue : List<Job>
     - closed : boolean
-    + JobQueue()
     + pushJob(job : Job) : void
     + popJob() : Job
     + popRandomJob() : Job
     + popJobBlocking() : Job
-    + popRandomJobBlocking() : Job
     + close() : void
-    + isEmpty() : boolean
     + size() : int
 }
 
 class Node {
-    - ID : int
+    - id : int
     - estado : EstadoNode
     - contadorEjecuciones : int
-    - lock : ReentrantLock
-    + Node(id : int)
     + intentarOcupar() : boolean
-    + setEstado(estado : EstadoNode) : void
+    + setEstado(e : EstadoNode) : void
     + getEstado() : EstadoNode
-    + getID() : int
     + incrementarContador() : void
-    + getContadorEjecuciones() : int
 }
 
 class NodeMatrix {
-    - cantidadNodos : int
     - nodos : Node[]
-    + NodeMatrix()
+    - cantidadNodos : int
     + ocuparNodoAleatorio() : Node
-    - setFueradeServicio(idNodo : int) : boolean
-    - setLibre(idNodo : int) : boolean
-    + desocuparNodo(idNodo : int) : boolean
-    + sacarDeServicio(idNodo : int) : boolean
-    + obtenerEstadisticasNodos() : String
+    + desocuparNodo(id : int) : boolean
+    + sacarDeServicio(id : int) : boolean
 }
 
 class Scheduler {
-    - {static} DEMORA_MS : int
-    - enCola : JobQueue
     - creados : JobQueue
+    - enCola : JobQueue
     - matriz : NodeMatrix
-    + Scheduler(enCola : JobQueue, creados : JobQueue, matriz : NodeMatrix)
     + run() : void
-    - buscarNodoDisponible() : Node
-    - esperarDemora() : boolean
 }
 
 class PreExecutionCheck {
-    - nodeMatrix : NodeMatrix
     - jobsEnCola : JobQueue
     - jobsEnEjecucion : JobQueue
     - jobsFallidos : JobQueue
-    + PreExecutionCheck(nodeMatrix : NodeMatrix, jobsEnCola : JobQueue, jobsEnEjecucion : JobQueue, jobsFallidos : JobQueue)
+    - nodeMatrix : NodeMatrix
     + run() : void
 }
 
 class WorkerExecution {
-    - {static} DEMORA_MS : int
     - jobsEnEjecucion : JobQueue
     - jobsFinalizados : JobQueue
     - jobsFallidos : JobQueue
-    + WorkerExecution(jobsEnEjecucion : JobQueue, jobsFinalizados : JobQueue, jobsFallidos : JobQueue)
     + run() : void
 }
 
@@ -137,134 +93,42 @@ class PostProcessing {
     - jobsFinalizados : JobQueue
     - jobsValidados : JobQueue
     - jobsFallidos : JobQueue
-    + PostProcessing(jobsFinalizados : JobQueue, jobsValidados : JobQueue, jobsFallidos : JobQueue)
     + run() : void
 }
 
-Main ..> Job : crea 500 jobs
-Main ..> JobQueue : crea colas
-Main ..> NodeMatrix : crea matriz y obtiene estadisticas
-Main ..> Scheduler : crea 3 hilos
-Main ..> PreExecutionCheck : crea 2 hilos
-Main ..> WorkerExecution : crea 3 hilos
-Main ..> PostProcessing : crea 2 hilos
-Main ..> Thread : inicia y espera hilos
-Main ..> PrintWriter : registra logs
-Main ..> Files : crea directorio y writer
-Main ..> Path : crea ruta de log
-Main ..> DateTimeFormatter : formatea fechas
-Main ..> LocalDateTime : fecha y hora actual
+class Main
 
+' ================= RELACIONES =================
+
+' HERENCIA / IMPLEMENTACION
 Scheduler ..|> Runnable
 PreExecutionCheck ..|> Runnable
 WorkerExecution ..|> Runnable
 PostProcessing ..|> Runnable
 
-Job --> EstadoJob : estado
-Job --> Node : nodoAsignado por ID
-Node --> EstadoNode : estado
-Node --> ReentrantLock : protege estado y contador
+' COMPOSICION
+NodeMatrix *-- Node : contiene
 
-JobQueue "1" o-- "0..*" Job : almacena
-JobQueue --> LinkedList : usa
+' AGREGACION
+JobQueue o-- Job : almacena
 
-NodeMatrix "1" *-- "200" Node : administra
-NodeMatrix ..> StringBuilder : arma estadisticas
+' ASOCIACIONES FUERTES
+Scheduler --> JobQueue : usa
+Scheduler --> NodeMatrix : asigna nodo
 
-Scheduler --> JobQueue : creados
-Scheduler --> JobQueue : enCola
-Scheduler --> NodeMatrix : ocupa nodo
-Scheduler ..> Node : asigna al job
+PreExecutionCheck --> JobQueue
+PreExecutionCheck --> NodeMatrix
 
-PreExecutionCheck --> NodeMatrix : libera o saca de servicio
-PreExecutionCheck --> JobQueue : jobsEnCola
-PreExecutionCheck --> JobQueue : jobsEnEjecucion
-PreExecutionCheck --> JobQueue : jobsFallidos
-PreExecutionCheck ..> ThreadLocalRandom : 15% invalido
-PreExecutionCheck ..> Job : valida
+WorkerExecution --> JobQueue
+PostProcessing --> JobQueue
 
-WorkerExecution --> JobQueue : jobsEnEjecucion
-WorkerExecution --> JobQueue : jobsFinalizados
-WorkerExecution --> JobQueue : jobsFallidos
-WorkerExecution ..> ThreadLocalRandom : 10% falla
-WorkerExecution ..> Job : ejecuta
+Main --> Scheduler
+Main --> PreExecutionCheck
+Main --> WorkerExecution
+Main --> PostProcessing
 
-PostProcessing --> JobQueue : jobsFinalizados
-PostProcessing --> JobQueue : jobsValidados
-PostProcessing --> JobQueue : jobsFallidos
-PostProcessing ..> ThreadLocalRandom : 5% inconsistente
-PostProcessing ..> Job : verifica resultado
-
-note right of Job
-  Cada job guarda su estado actual
-  y el ID del nodo asignado.
-
-  nodoAsignado inicia en -1.
-end note
-
-note right of JobQueue
-  Sus metodos sincronizados protegen
-  el acceso concurrente a la cola.
-
-  popJobBlocking() y popRandomJobBlocking()
-  esperan con wait() mientras la cola
-  esta vacia y no fue cerrada.
-
-  close() marca la cola como cerrada
-  y despierta a los hilos con notifyAll().
-end note
-
-note right of NodeMatrix
-  Administra 200 nodos.
-
-  La ocupacion delega la exclusion
-  mutua a cada Node con intentarOcupar().
-
-  Tambien genera estadisticas globales
-  y detalle por nodo.
-end note
-
-note bottom of Main
-  Crea las colas:
-  creados, enCola, enEjecucion,
-  finalizados, fallidos y validados.
-
-  Luego inicia los hilos, monitorea
-  validados + fallidos y cierra las
-  etapas con close() y join().
-
-  Tambien crea un archivo de log
-  con fecha y hora de ejecucion y
-  registra estadisticas finales de nodos.
-end note
-
-note bottom of Scheduler
-  Etapa 1:
-  toma jobs creados, busca un nodo libre,
-  asigna el ID del nodo al job y lo pasa
-  a la cola enCola.
-end note
-
-note bottom of PreExecutionCheck
-  Etapa 2:
-  toma jobs aleatorios de enCola.
-  85% pasan a enEjecucion.
-  15% pasan a fallidos y el nodo queda
-  fuera de servicio.
-end note
-
-note bottom of WorkerExecution
-  Etapa 3:
-  toma jobs de enEjecucion.
-  90% pasan a finalizados.
-  10% pasan a fallidos.
-end note
-
-note bottom of PostProcessing
-  Etapa 4:
-  toma jobs aleatorios de finalizados.
-  95% pasan a validados.
-  5% pasan a fallidos.
-end note
+' DEPENDENCIAS
+Job --> EstadoJob
+Node --> EstadoNode
 
 @enduml
